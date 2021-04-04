@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CSCore.CoreAudioAPI;
 using System.Diagnostics;
 using System.Linq;
@@ -18,13 +18,12 @@ namespace VolumeMixerControl
                 if (args[0] == "changeVolume")
                 {
                     changeSoftwareVolume(args[1], float.Parse(args[2], CultureInfo.InvariantCulture.NumberFormat));
-
                 }
             }
             else if (argsCount == 2)
             {
                 if (args[0] == "getMusicSoftware")
-                    Console.WriteLine(getMusicFromSoftware(args[1]));
+                    Console.WriteLine(getMusicFromSoftware(args[1])); //get name of windows
             }
             else if (argsCount == 1)
             {
@@ -49,9 +48,6 @@ namespace VolumeMixerControl
                 Console.WriteLine("getMusicSoftware [Name]: Get window name of the software");
                 Console.WriteLine("Exemple: getMusicSoftware spotify");
             }
-
-
-
         }
 
         private static bool changeSoftwareVolume(string software, float volume)
@@ -124,7 +120,6 @@ namespace VolumeMixerControl
 
             return true;
         }
-
         private static string getSoftwaresNames()
         {
             using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render))
@@ -172,10 +167,7 @@ namespace VolumeMixerControl
             {
                 return "Error: Software Not Found";
             }
-
             return proc.MainWindowTitle;
-
-
         }
         private static string getSoftwaresIDs()
         {
