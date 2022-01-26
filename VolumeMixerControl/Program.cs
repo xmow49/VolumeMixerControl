@@ -40,7 +40,7 @@ namespace VolumeMixerControl
                 Console.WriteLine("----------");
                 Console.WriteLine("getSoftwaresNames : Get all softwares names who produce sound.");
                 Console.WriteLine("----------");
-                Console.WriteLine("changeVolume [SoftwareName] [Value] : Add or decrease percentage of volume of a software");
+                Console.WriteLine("changeVolume [SoftwareName or Process Id] [Value] : Add or decrease percentage of volume of a software");
                 Console.WriteLine("[SoftwareName] : Name of the taget Software");
                 Console.WriteLine("[Value] : -100 to 100 %");
                 Console.WriteLine("Exemple: changeVolume chrome 10 : Add 10% to Google Chrome volume");
@@ -52,37 +52,50 @@ namespace VolumeMixerControl
 
         private static bool changeSoftwareVolume(string software, float volume)
         {
-            if (software == "System")
-                software = "Idle";
-            using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render))
+            try
             {
-                using (var sessionEnumerator = sessionManager.GetSessionEnumerator())
+                //software as process id
+                int processId = Int32.Parse(software);
+                changeSoftwareIDVolume(processId, volume);
+            }
+            catch (FormatException)
+            {
+                //software as name
+                if (software == "System")
+                    software = "Idle";
+                using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render))
                 {
-                    int[] IDsound = new int[sessionEnumerator.Count];
-                    int SoftwareCount = 0;
-                    foreach (var session in sessionEnumerator)
+                    using (var sessionEnumerator = sessionManager.GetSessionEnumerator())
                     {
-                        using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
-                        using (var sessionControl = session.QueryInterface<AudioSessionControl2>())
+                        int[] IDsound = new int[sessionEnumerator.Count];
+                        int SoftwareCount = 0;
+                        foreach (var session in sessionEnumerator)
                         {
-                            IDsound[SoftwareCount] = sessionControl.ProcessID;
-                            SoftwareCount++;
+                            using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
+                            using (var sessionControl = session.QueryInterface<AudioSessionControl2>())
+                            {
+                                IDsound[SoftwareCount] = sessionControl.ProcessID;
+                                SoftwareCount++;
+                            }
                         }
-                    }
 
-                    string[] SoftwareName = new string[SoftwareCount];
-                    for (int a = 0; a < SoftwareCount; a++)
-                    {
-                        SoftwareName[a] = Process.GetProcessById(IDsound[a]).ProcessName;
-                        if (SoftwareName[a] == software)
+                        string[] SoftwareName = new string[SoftwareCount];
+                        for (int a = 0; a < SoftwareCount; a++)
                         {
-                            changeSoftwareIDVolume(IDsound[a], volume);
-                            break;
+                            SoftwareName[a] = Process.GetProcessById(IDsound[a]).ProcessName;
+                            if (SoftwareName[a] == software)
+                            {
+                                changeSoftwareIDVolume(IDsound[a], volume);
+                                break;
+                            }
                         }
                     }
                 }
+                return true;
             }
-            return true;
+            return false;
+
+
         }
 
         private static bool changeSoftwareIDVolume(int id, float volume)
@@ -137,22 +150,27 @@ namespace VolumeMixerControl
                             SoftwareCount++;
                         }
                     }
-
+                    string str = "";
                     string[] SoftwareName = new string[SoftwareCount];
                     for (int a = 0; a < SoftwareCount; a++)
                     {
                         SoftwareName[a] = Process.GetProcessById(IDsound[a]).ProcessName;
+                        if (SoftwareName[a].ToString() == "Idle")
+                            SoftwareName[a] = "System";
+                        //Console.WriteLine(IDsound[a]);
+                        str += IDsound[a] + ":" + SoftwareName[a].ToString() + "\n";
+
                     }
 
                     //Array.ForEach(SoftwareName, Console.WriteLine); //Debug
-                    string str = "";
-                    foreach (var item in SoftwareName)
+                    
+                    /*foreach (var item in SoftwareName)
                     {
                         if (item.ToString() == "Idle")
-                            str += "System" + " ";
-                        else
-                            str += item.ToString() + " ";
-                    }
+                            str += "System" + ",";
+                        //else
+                            //str += IDsound[a] + item.ToString() + ",";
+                    }*/
                     str = str.Remove(str.Length - 1);
                     return str;
 
